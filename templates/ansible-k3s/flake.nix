@@ -12,13 +12,10 @@
     in
     {
       devShells = forAllSystems (system: {
-        default = nix-dev.devShells.${system}.ansible-k3s;
+        default = nix-dev.devShells.${system}.ansible-k3s {
+          kubeconfig = "$PWD/secrets/.kubeconfig"; # Customize this path as needed
+          sopsAgeKeyFile = "$PWD/secrets/sops/age/keys.txt"; # Customize this path as needed
+        };
       });
-
-      # Metadata for flake show
-      meta = {
-        maintainers = [ "stuartbowyer" ];
-        description = "Development environment for K3s automation with Ansible & FluxCD.";
-      };
     };
 }
