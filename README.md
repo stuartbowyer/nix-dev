@@ -7,6 +7,7 @@ Reusable **Nix Flake Dev Environments** for common toolchains.
 | Name | Description |
 |------|--------------|
 | `ansible-k3s` | Ansible, kubectl, FluxCD shell for managing K3s clusters |
+| `python311` | Generic Python 3.11 shell with auto-managed `.venv` (installs `pyproject.toml` or `requirements.txt` on first entry) |
 
 Use in another project:
 
