@@ -9,6 +9,7 @@ Reusable **Nix Flake Dev Environments** for common toolchains.
 | `ansible-k3s` | Ansible, kubectl, FluxCD shell for managing K3s clusters |
 | `python311` | Generic Python 3.11 shell with auto-managed `.venv` (runs `uv sync` for `pyproject.toml`, or installs `requirements.txt`) |
 | `terraform` | Base Terraform / IaC shell (terraform, pre-commit, jq). Add a cloud CLI via `overrideAttrs` |
+| `hugo` | Static-site shell with Hugo |
 
 ## Quick start
 
