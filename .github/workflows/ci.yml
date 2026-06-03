@@ -7,6 +7,14 @@ on:
   workflow_dispatch:
 
 jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Check formatting
+        run: nix fmt -- --check .
+
   flake-check:
     strategy:
       fail-fast: false
