@@ -15,7 +15,7 @@
 , devDeps ? (ps: [ ]) # extra dev/test-only python packages
 , devPackages ? (pkgs: [ ]) # extra non-python dev tools (e.g. nodejs)
 , program ? pname # binary name exposed as apps.default
-, python ? null # defaults to nixpkgs python311
+, python ? null # defaults to nixpkgs python312
 , systems ? [ "aarch64-darwin" ]
 }:
 
@@ -25,7 +25,7 @@ let
   perSystem = system:
     let
       pkgs = nixpkgs.legacyPackages.${system};
-      py = if python == null then pkgs.python311 else python;
+      py = if python == null then pkgs.python312 else python;
 
       app = py.pkgs.buildPythonApplication {
         inherit pname version src;
