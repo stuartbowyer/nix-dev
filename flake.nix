@@ -23,6 +23,9 @@
       # Expose reusable library functions
       lib = { inherit mkPythonApp; };
 
+      # `nix fmt` — format all Nix files with the community standard.
+      formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-rfc-style);
+
       # Smoke-test the builders against a minimal example app.
       checks = forAllSystems (system: {
         mkPythonApp-example =
