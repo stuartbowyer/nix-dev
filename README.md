@@ -81,12 +81,51 @@ The `ansible-k3s` shell defaults `KUBECONFIG` to `$PWD/secrets/.kubeconfig` and
 `SOPS_AGE_KEY_FILE` to `$PWD/secrets/sops/age/keys.txt`. Override either by
 exporting it before entering the shell (e.g. in a project `.envrc`).
 
+## Library builders (`lib.mkPythonApp`)
+
+To package a Python **application** (a `buildPythonApplication` plus a `nix run`
+app and a matching dev shell), use `nix-dev.lib.mkPythonApp`. It returns full
+flake outputs (`packages` / `apps` / `devShells`), defaulting to
+`aarch64-darwin`, so the whole consumer flake is just its parameters:
+
+```nix
+{
+  inputs.nix-dev.url = "github:stuartbowyer/nix-dev";
+
+  outputs = { nix-dev, ... }: nix-dev.lib.mkPythonApp {
+    pname = "meeting-summariser";
+    src = ./.;
+    deps = ps: with ps; [ click pyyaml ]; # runtime (resolved from nixpkgs)
+    devDeps = ps: [ ps.pytest ];          # dev/test-only
+  };
+}
+```
+
+Arguments — `pname`, `src` (required); `version`, `deps`, `devDeps`,
+`devPackages` (non-python dev tools, e.g. `pkgs: [ pkgs.nodejs_22 ]`),
+`program` (binary name, defaults to `pname`), `python` (defaults to
+`python312`), `systems` (defaults to `[ "aarch64-darwin" ]`). Compose extra
+outputs with `//`.
+
+**Pick the right Python paradigm:**
+
+| | `mkPythonApp` | `python311` devShell |
+|---|---|---|
+| For | packaging an app / CLI / MCP | general dev work |
+| Deps | nixpkgs (must exist there) | `pyproject.toml` / `uv.lock` via uv |
+| Env | pure-nix `withPackages` | mutable `.venv` |
+
+Because deps resolve from nixpkgs, every dependency must exist there. For
+PyPI-only deps, use the uv-based `python311` shell instead.
+
 ## Structure
 
 ```
 nix-dev/
   flake.nix              # main flake definition
   devshells/             # reusable devShell definitions (auto-discovered)
+  lib/                   # reusable builders (e.g. mkPythonApp)
+  examples/              # minimal apps used as CI smoke-tests
 ```
 
 Adding a new shell is just dropping a `devshells/<name>.nix` file that returns
