@@ -27,18 +27,18 @@ forAllSystems (system:
         export UV_PYTHON="${python}/bin/python"
         export UV_PYTHON_DOWNLOADS=never
 
-        if [ ! -d ".venv" ]; then
-          # --seed installs pip/setuptools into the venv for tools that shell out to `pip`.
-          uv venv --seed .venv
-          source .venv/bin/activate
-          if [ -f "pyproject.toml" ]; then
-            uv pip install -e ".[dev]" || uv pip install -e .
-          elif [ -f "requirements.txt" ]; then
-            uv pip install -r requirements.txt
-          fi
+        if [ -f "pyproject.toml" ]; then
+          # uv sync respects uv.lock and is idempotent, so run it on every entry
+          # to pick up dependency changes. It creates/updates .venv as needed.
+          uv sync
+        elif [ -f "requirements.txt" ]; then
+          # --seed installs pip/setuptools for tools that shell out to `pip`.
+          [ -d ".venv" ] || uv venv --seed .venv
+          uv pip install -r requirements.txt
         else
-          source .venv/bin/activate
+          [ -d ".venv" ] || uv venv --seed .venv
         fi
+        source .venv/bin/activate
 
         if [ -t 1 ] && [ -z "$IN_ZSH" ]; then
           export IN_ZSH=1
