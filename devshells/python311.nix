@@ -11,10 +11,11 @@ forAllSystems (system:
   {
     python311 = pkgs.mkShellNoCC {
       name = "python311-env-${system}";
-      meta.description = "Generic Python 3.11 dev shell with auto-managed .venv";
+      meta.description = "Generic Python 3.11 dev shell with uv-managed .venv";
 
       packages = [
         python
+        pkgs.uv
         pkgs.git
         pkgs.zsh
       ];
@@ -22,14 +23,18 @@ forAllSystems (system:
       shellHook = ''
         export SHELL=${pkgs.zsh}/bin/zsh
 
+        # Let uv use the Nix-provided interpreter rather than downloading its own.
+        export UV_PYTHON="${python}/bin/python"
+        export UV_PYTHON_DOWNLOADS=never
+
         if [ ! -d ".venv" ]; then
-          ${python}/bin/python -m venv .venv
+          # --seed installs pip/setuptools into the venv for tools that shell out to `pip`.
+          uv venv --seed .venv
           source .venv/bin/activate
-          pip install --upgrade pip
           if [ -f "pyproject.toml" ]; then
-            pip install -e ".[dev]" || pip install -e .
+            uv pip install -e ".[dev]" || uv pip install -e .
           elif [ -f "requirements.txt" ]; then
-            pip install -r requirements.txt
+            uv pip install -r requirements.txt
           fi
         else
           source .venv/bin/activate
