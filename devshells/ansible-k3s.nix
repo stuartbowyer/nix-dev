@@ -8,7 +8,7 @@ forAllSystems (system:
     pkgs = nixpkgs.legacyPackages.${system};
   in
   {
-    ansible-k3s = { kubeconfig ? "$PWD/secrets/.kubeconfig", sopsAgeKeyFile ? "$PWD/secrets/sops/age/keys.txt" }: pkgs.mkShellNoCC {
+    ansible-k3s = pkgs.mkShellNoCC {
       name = "ansible-k3s-env-${system}";
       meta.description = "Development shell for managing K3s clusters with Ansible and FluxCD";
 
@@ -26,9 +26,10 @@ forAllSystems (system:
         # Use zsh as the default interactive shell
         export SHELL=${pkgs.zsh}/bin/zsh
 
-        # Environment variables for kubeconfig and sops age key file
-        export KUBECONFIG="${kubeconfig}"
-        export SOPS_AGE_KEY_FILE="${sopsAgeKeyFile}"
+        # Default kubeconfig / sops age key paths; override by exporting these
+        # before entering the shell (e.g. in a project .envrc).
+        export KUBECONFIG="''${KUBECONFIG:-$PWD/secrets/.kubeconfig}"
+        export SOPS_AGE_KEY_FILE="''${SOPS_AGE_KEY_FILE:-$PWD/secrets/sops/age/keys.txt}"
         export EDITOR="code --wait"
 
         # Only exec into zsh once per session
