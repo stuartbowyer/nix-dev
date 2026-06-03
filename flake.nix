@@ -27,8 +27,9 @@
       # Expose reusable library functions
       lib = { inherit mkPythonApp; };
 
-      # `nix fmt` — format all Nix files with the community standard.
-      formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-rfc-style);
+      # `nix fmt` — format the whole tree (treefmt + nixfmt). `nix fmt -- --ci`
+      # checks formatting without writing (used in CI).
+      formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-tree);
 
       # Smoke-test the builders against a minimal example app.
       checks = forAllSystems (system: {
