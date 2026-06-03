@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  flake-check:
+    strategy:
+      fail-fast: false
+      matrix:
+        # ubuntu-latest -> x86_64-linux, macos-latest -> aarch64-darwin
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: Check flake
+        run: nix flake check --print-build-logs
+      - name: Build devShells
+        run: |
+          for shell in $(nix eval --json '.#devShells.'"$(nix eval --raw --impure --expr builtins.currentSystem)" --apply builtins.attrNames | tr -d '[]"' | tr ',' ' '); do
+            echo "::group::build $shell"
+            nix develop ".#$shell" --command true
+            echo "::endgroup::"
+          done
