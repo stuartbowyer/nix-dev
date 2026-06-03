@@ -28,45 +28,58 @@ use flake "github:stuartbowyer/nix-dev#python311"
 
 then run `direnv allow`.
 
-## Use in a project flake
+## Use in a project
 
-Use in another project:
+There are two ways to consume a shell. Both keep tool versions identical across
+every project, because in both cases **nix-dev's pinned nixpkgs is the source of
+truth** — do *not* add `nix-dev.inputs.nixpkgs.follows`, which would let each
+project's own nixpkgs override the pin and drift apart.
+
+### 1. As-is — point direnv straight at it (no local flake)
+
+If a project just needs a shell unchanged, skip the flake entirely:
+
+```bash
+# .envrc
+use flake "github:stuartbowyer/nix-dev#terraform"
+```
+
+(or run `nix develop "github:stuartbowyer/nix-dev#terraform"` ad hoc). The repo
+keeps no `flake.lock`, so it always tracks nix-dev's current pin.
+
+### 2. Add tools — wrap it in a thin flake
+
+When a project needs to *extend* a shell, take a single `nix-dev` input, reuse
+nix-dev's nixpkgs, and `overrideAttrs` to append packages:
 
 ```nix
 {
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   inputs.nix-dev.url = "github:stuartbowyer/nix-dev";
-  # Share a single nixpkgs so versions stay consistent.
-  inputs.nix-dev.inputs.nixpkgs.follows = "nixpkgs";
 
-  outputs = { self, nixpkgs, nix-dev }:
+  outputs = { nix-dev, ... }:
     let
+      nixpkgs = nix-dev.inputs.nixpkgs; # nix-dev's pinned nixpkgs
       forAllSystems = nixpkgs.lib.genAttrs [ "aarch64-darwin" "x86_64-linux" ];
     in
     {
-      devShells = forAllSystems (system: {
-        default = nix-dev.devShells.${system}.ansible-k3s;
-      });
+      devShells = forAllSystems (system:
+        let pkgs = nixpkgs.legacyPackages.${system}; in
+        {
+          default = nix-dev.devShells.${system}.terraform.overrideAttrs (old: {
+            # mkShell puts `packages` into nativeBuildInputs.
+            nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.google-cloud-sdk ];
+          });
+        });
     };
 }
 ```
 
+(Use `nixpkgs.legacyPackages.${system}` unless an extra is unfree, in which case
+`import nixpkgs { inherit system; config.allowUnfree = true; }`.)
+
 The `ansible-k3s` shell defaults `KUBECONFIG` to `$PWD/secrets/.kubeconfig` and
 `SOPS_AGE_KEY_FILE` to `$PWD/secrets/sops/age/keys.txt`. Override either by
 exporting it before entering the shell (e.g. in a project `.envrc`).
-
-The `terraform` shell is a base; add a cloud CLI per project with `overrideAttrs`:
-
-```nix
-devShells = forAllSystems (system: {
-  default = nix-dev.devShells.${system}.terraform.overrideAttrs (old: {
-    # mkShell puts `packages` into nativeBuildInputs.
-    nativeBuildInputs = old.nativeBuildInputs ++ [
-      nixpkgs.legacyPackages.${system}.google-cloud-sdk
-    ];
-  });
-});
-```
 
 ## Structure
 
