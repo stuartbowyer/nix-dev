@@ -1,0 +1,14 @@
+[project]
+name = "example-app"
+version = "0.1.0"
+description = "Minimal example used to smoke-test nix-dev's mkPythonApp builder"
+
+[project.scripts]
+example-app = "example_app:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/example_app"]
