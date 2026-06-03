@@ -1,12 +1,19 @@
 { nixpkgs, systems }:
 
 let
-  forAllSystems = nixpkgs.lib.genAttrs systems;
-  ansibleK3sShells = import ./ansible-k3s.nix { inherit nixpkgs systems; };
-  python311Shells = import ./python311.nix { inherit nixpkgs systems; };
-in
+  inherit (nixpkgs) lib;
+  forAllSystems = lib.genAttrs systems;
 
-forAllSystems (system: {
-  ansible-k3s = ansibleK3sShells.${system}.ansible-k3s;
-  python311 = python311Shells.${system}.python311;
-})
+  # Auto-discover every devshell module in this directory (except this file).
+  shellFiles = lib.filterAttrs
+    (name: type:
+      type == "regular" && name != "default.nix" && lib.hasSuffix ".nix" name)
+    (builtins.readDir ./.);
+
+  shellModules = lib.mapAttrsToList
+    (name: _: import (./. + "/${name}") { inherit nixpkgs systems; })
+    shellFiles;
+in
+# Each module is `forAllSystems (system: { <name> = derivation; })`; merge them.
+forAllSystems (system:
+  lib.foldl' (acc: mod: acc // mod.${system}) { } shellModules)
