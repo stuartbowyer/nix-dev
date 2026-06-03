@@ -1,13 +1,23 @@
 # Internal helper: wraps mkShellNoCC with the zsh behaviour shared by every
 # devShell — zsh + git on PATH, SHELL set, and a one-shot `exec zsh` for
 # interactive sessions. Each shell only declares what is unique to it.
-{ pkgs, name, description ? "", packages ? [ ], shellHook ? "" }:
+{
+  pkgs,
+  name,
+  description ? "",
+  packages ? [ ],
+  shellHook ? "",
+}:
 
 pkgs.mkShellNoCC {
   inherit name;
   meta.description = description;
 
-  packages = [ pkgs.zsh pkgs.git ] ++ packages;
+  packages = [
+    pkgs.zsh
+    pkgs.git
+  ]
+  ++ packages;
 
   shellHook = ''
     export SHELL=${pkgs.zsh}/bin/zsh

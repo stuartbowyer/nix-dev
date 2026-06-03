@@ -8,21 +8,23 @@
 # defaulting to aarch64-darwin. Compose extra outputs with `//` if needed.
 { nixpkgs }:
 
-{ pname
-, src
-, version ? "0.1.0"
-, deps ? (ps: [ ]) # runtime dependencies (ps == python.pkgs)
-, devDeps ? (ps: [ ]) # extra dev/test-only python packages
-, devPackages ? (pkgs: [ ]) # extra non-python dev tools (e.g. nodejs)
-, program ? pname # binary name exposed as apps.default
-, python ? null # defaults to nixpkgs python312
-, systems ? [ "aarch64-darwin" ]
+{
+  pname,
+  src,
+  version ? "0.1.0",
+  deps ? (ps: [ ]), # runtime dependencies (ps == python.pkgs)
+  devDeps ? (ps: [ ]), # extra dev/test-only python packages
+  devPackages ? (pkgs: [ ]), # extra non-python dev tools (e.g. nodejs)
+  program ? pname, # binary name exposed as apps.default
+  python ? null, # defaults to nixpkgs python312
+  systems ? [ "aarch64-darwin" ],
 }:
 
 let
   forSystems = nixpkgs.lib.genAttrs systems;
 
-  perSystem = system:
+  perSystem =
+    system:
     let
       pkgs = nixpkgs.legacyPackages.${system};
       py = if python == null then pkgs.python312 else python;
@@ -56,7 +58,13 @@ let
   built = forSystems perSystem;
 in
 {
-  packages = forSystems (s: { default = built.${s}.package; });
-  apps = forSystems (s: { default = built.${s}.app; });
-  devShells = forSystems (s: { default = built.${s}.devShell; });
+  packages = forSystems (s: {
+    default = built.${s}.package;
+  });
+  apps = forSystems (s: {
+    default = built.${s}.app;
+  });
+  devShells = forSystems (s: {
+    default = built.${s}.devShell;
+  });
 }

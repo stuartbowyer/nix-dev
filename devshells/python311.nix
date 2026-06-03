@@ -4,7 +4,8 @@ let
   forAllSystems = nixpkgs.lib.genAttrs systems;
   mkDevShell = import ../lib/mkDevShell.nix;
 in
-forAllSystems (system:
+forAllSystems (
+  system:
   let
     pkgs = nixpkgs.legacyPackages.${system};
     python = pkgs.python311;
@@ -14,7 +15,10 @@ forAllSystems (system:
       inherit pkgs;
       name = "python311-env-${system}";
       description = "Generic Python 3.11 dev shell with uv-managed .venv";
-      packages = [ python pkgs.uv ];
+      packages = [
+        python
+        pkgs.uv
+      ];
       shellHook = ''
         # Let uv use the Nix-provided interpreter rather than downloading its own.
         export UV_PYTHON="${python}/bin/python"
@@ -34,4 +38,5 @@ forAllSystems (system:
         source .venv/bin/activate
       '';
     };
-  })
+  }
+)

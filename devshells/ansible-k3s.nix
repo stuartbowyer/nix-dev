@@ -4,7 +4,8 @@ let
   forAllSystems = nixpkgs.lib.genAttrs systems;
   mkDevShell = import ../lib/mkDevShell.nix;
 in
-forAllSystems (system:
+forAllSystems (
+  system:
   let
     pkgs = nixpkgs.legacyPackages.${system};
   in
@@ -13,7 +14,13 @@ forAllSystems (system:
       inherit pkgs;
       name = "ansible-k3s-env-${system}";
       description = "Development shell for managing K3s clusters with Ansible and FluxCD";
-      packages = with pkgs; [ ansible kubectl fluxcd age sops ];
+      packages = with pkgs; [
+        ansible
+        kubectl
+        fluxcd
+        age
+        sops
+      ];
       shellHook = ''
         # Default kubeconfig / sops age key paths; override by exporting these
         # before entering the shell (e.g. in a project .envrc).
@@ -22,4 +29,5 @@ forAllSystems (system:
         export EDITOR="code --wait"
       '';
     };
-  })
+  }
+)
