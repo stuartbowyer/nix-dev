@@ -8,6 +8,7 @@ Reusable **Nix Flake Dev Environments** for common toolchains.
 |------|--------------|
 | `ansible-k3s` | Ansible, kubectl, FluxCD shell for managing K3s clusters |
 | `python311` | Generic Python 3.11 shell with auto-managed `.venv` (runs `uv sync` for `pyproject.toml`, or installs `requirements.txt`) |
+| `terraform` | Base Terraform / IaC shell (terraform, pre-commit, jq). Add a cloud CLI via `overrideAttrs` |
 
 ## Quick start
 
@@ -53,6 +54,19 @@ Use in another project:
 The `ansible-k3s` shell defaults `KUBECONFIG` to `$PWD/secrets/.kubeconfig` and
 `SOPS_AGE_KEY_FILE` to `$PWD/secrets/sops/age/keys.txt`. Override either by
 exporting it before entering the shell (e.g. in a project `.envrc`).
+
+The `terraform` shell is a base; add a cloud CLI per project with `overrideAttrs`:
+
+```nix
+devShells = forAllSystems (system: {
+  default = nix-dev.devShells.${system}.terraform.overrideAttrs (old: {
+    # mkShell puts `packages` into nativeBuildInputs.
+    nativeBuildInputs = old.nativeBuildInputs ++ [
+      nixpkgs.legacyPackages.${system}.google-cloud-sdk
+    ];
+  });
+});
+```
 
 ## Structure
 
