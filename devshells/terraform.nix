@@ -2,6 +2,7 @@
 
 let
   forAllSystems = nixpkgs.lib.genAttrs systems;
+  mkDevShell = import ../lib/mkDevShell.nix;
 in
 forAllSystems (system:
   let
@@ -13,27 +14,13 @@ forAllSystems (system:
     };
   in
   {
-    terraform = pkgs.mkShellNoCC {
+    terraform = mkDevShell {
+      inherit pkgs;
       name = "terraform-env-${system}";
-      meta.description = "Base Terraform / IaC dev shell (extend with a cloud CLI via overrideAttrs)";
-
-      packages = with pkgs; [
-        zsh
-        git
-        terraform
-        pre-commit
-        jq
-      ];
-
+      description = "Base Terraform / IaC dev shell (extend with a cloud CLI via overrideAttrs)";
+      packages = with pkgs; [ terraform pre-commit jq ];
       shellHook = ''
-        export SHELL=${pkgs.zsh}/bin/zsh
         export EDITOR="code --wait"
-
-        # Only exec into zsh once per session
-        if [ -t 1 ] && [ -z "$IN_ZSH" ]; then
-          export IN_ZSH=1
-          exec ${pkgs.zsh}/bin/zsh
-        fi
       '';
     };
   })

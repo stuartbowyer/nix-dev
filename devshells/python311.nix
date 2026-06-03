@@ -2,6 +2,7 @@
 
 let
   forAllSystems = nixpkgs.lib.genAttrs systems;
+  mkDevShell = import ../lib/mkDevShell.nix;
 in
 forAllSystems (system:
   let
@@ -9,20 +10,12 @@ forAllSystems (system:
     python = pkgs.python311;
   in
   {
-    python311 = pkgs.mkShellNoCC {
+    python311 = mkDevShell {
+      inherit pkgs;
       name = "python311-env-${system}";
-      meta.description = "Generic Python 3.11 dev shell with uv-managed .venv";
-
-      packages = [
-        python
-        pkgs.uv
-        pkgs.git
-        pkgs.zsh
-      ];
-
+      description = "Generic Python 3.11 dev shell with uv-managed .venv";
+      packages = [ python pkgs.uv ];
       shellHook = ''
-        export SHELL=${pkgs.zsh}/bin/zsh
-
         # Let uv use the Nix-provided interpreter rather than downloading its own.
         export UV_PYTHON="${python}/bin/python"
         export UV_PYTHON_DOWNLOADS=never
@@ -39,11 +32,6 @@ forAllSystems (system:
           [ -d ".venv" ] || uv venv --seed .venv
         fi
         source .venv/bin/activate
-
-        if [ -t 1 ] && [ -z "$IN_ZSH" ]; then
-          export IN_ZSH=1
-          exec ${pkgs.zsh}/bin/zsh
-        fi
       '';
     };
   })
