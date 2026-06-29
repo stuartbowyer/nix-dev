@@ -3,7 +3,7 @@ name: update-flake-lock
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 4 * * 1" # Mondays 04:00 UTC
+    - cron: "0 4 1 * *" # 1st of the month, 04:00 UTC
 
 permissions:
   contents: write
@@ -18,7 +18,3 @@ jobs:
       - uses: DeterminateSystems/update-flake-lock@main
         with:
           pr-title: "flake.lock: update nixpkgs"
-          # NOTE: PRs opened with the default GITHUB_TOKEN do not trigger other
-          # workflows, so CI won't run on this PR automatically. To have the
-          # flake-check run on it, create a PAT secret and pass it here:
-          #   token: ${{ secrets.GH_TOKEN_FOR_UPDATES }}
