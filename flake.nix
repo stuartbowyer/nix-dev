@@ -19,13 +19,20 @@
 
       # Reusable builders (functions, not finished derivations).
       mkPythonApp = import ./lib/mkPythonApp.nix { inherit nixpkgs; };
+      mkDevShell = import ./lib/mkDevShell.nix;
+      mkUvShell = import ./lib/mkUvShell.nix;
     in
     {
       # Expose all reusable devShells
       devShells = devshells;
 
       # Expose reusable library functions
-      lib = { inherit mkPythonApp; };
+      # mkDevShell / mkUvShell are exported so a downstream flake can compose
+      # a shell (its own packages and `flake-help` entries) rather than
+      # overrideAttrs-ing a finished one.
+      lib = {
+        inherit mkPythonApp mkDevShell mkUvShell;
+      };
 
       # `nix fmt` — format the whole tree (treefmt + nixfmt). `nix fmt -- --ci`
       # checks formatting without writing (used in CI).

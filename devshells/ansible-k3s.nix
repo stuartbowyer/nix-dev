@@ -21,6 +21,24 @@ forAllSystems (
         age
         sops
       ];
+      commands = [
+        {
+          name = "ansible";
+          summary = "configuration management";
+        }
+        {
+          name = "kubectl";
+          summary = "cluster CLI; KUBECONFIG defaults to secrets/.kubeconfig";
+        }
+        {
+          name = "flux";
+          summary = "GitOps reconciliation";
+        }
+        {
+          name = "sops";
+          summary = "edit encrypted secrets; age key from secrets/sops/age";
+        }
+      ];
       shellHook = ''
         # Default kubeconfig / sops age key paths; override by exporting these
         # before entering the shell (e.g. in a project .envrc).

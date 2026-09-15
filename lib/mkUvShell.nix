@@ -1,19 +1,31 @@
 # Internal helper: a uv-managed Python dev shell for a given interpreter.
 # Shares the common zsh behaviour via mkDevShell; on entry it syncs .venv from
 # pyproject.toml (uv.lock-respecting) or requirements.txt.
+#
+# `extraPackages` and `commands` exist so a downstream flake can build on this
+# directly rather than overrideAttrs-ing the finished shell — that way its own
+# tools and its `flake-help` entries are declared in one place.
 {
   pkgs,
   python,
   name,
   description ? "",
+  extraPackages ? [ ],
+  commands ? [ ],
 }:
 
 import ./mkDevShell.nix {
-  inherit pkgs name description;
+  inherit
+    pkgs
+    name
+    description
+    commands
+    ;
   packages = [
     python
     pkgs.uv
-  ];
+  ]
+  ++ extraPackages;
   shellHook = ''
     # Let uv use the Nix-provided interpreter rather than downloading its own.
     export UV_PYTHON="${python}/bin/python"

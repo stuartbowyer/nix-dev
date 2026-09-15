@@ -15,6 +15,12 @@ forAllSystems (
       name = "hugo-env-${system}";
       description = "Static-site dev shell with Hugo";
       packages = [ pkgs.hugo ];
+      commands = [
+        {
+          name = "hugo";
+          summary = "static site generator";
+        }
+      ];
     };
   }
 )

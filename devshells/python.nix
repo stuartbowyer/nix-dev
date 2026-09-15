@@ -23,6 +23,16 @@ forAllSystems (
       name = "${p}-env-${system}";
       python = pkgs.${p};
       description = "Generic ${p} dev shell with uv-managed .venv";
+      commands = [
+        {
+          name = "uv";
+          summary = "package/venv manager; .venv is synced on shell entry";
+        }
+        {
+          name = "python";
+          summary = "the .venv interpreter (activated on entry)";
+        }
+      ];
     }
   )
 )

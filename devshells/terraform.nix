@@ -24,6 +24,20 @@ forAllSystems (
         pre-commit
         jq
       ];
+      commands = [
+        {
+          name = "terraform";
+          summary = "plan/apply IaC";
+        }
+        {
+          name = "pre-commit";
+          summary = "run the repo's hooks";
+        }
+        {
+          name = "jq";
+          summary = "JSON processor";
+        }
+      ];
       shellHook = ''
         export EDITOR="code --wait"
       '';
