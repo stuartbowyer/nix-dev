@@ -1,20 +1,75 @@
 name: update-flake-lock
 
+# Updates flake.lock and pushes it straight to main, but only if every
+# system's checks and devShells build against the new lock.
+
 on:
   workflow_dispatch:
   schedule:
     - cron: "0 4 1 * *" # 1st of the month, 04:00 UTC
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
-  update-lock:
+  update:
     runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.update.outputs.changed }}
     steps:
       - uses: actions/checkout@v5
       - uses: DeterminateSystems/nix-installer-action@main
-      - uses: DeterminateSystems/update-flake-lock@main
+      - id: update
+        run: |
+          nix flake update
+          if git diff --quiet flake.lock; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.update.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
         with:
-          pr-title: "flake.lock: update nixpkgs"
+          name: flake-lock
+          path: flake.lock
+
+  check:
+    needs: update
+    if: needs.update.outputs.changed == 'true'
+    strategy:
+      matrix:
+        # ubuntu-latest -> x86_64-linux, macos-latest -> aarch64-darwin
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          name: flake-lock
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Check flake
+        run: nix flake check --print-build-logs
+      - name: Build devShells
+        run: |
+          system=$(nix eval --raw --impure --expr builtins.currentSystem)
+          for shell in $(nix eval --raw ".#devShells.$system" --apply 's: builtins.concatStringsSep " " (builtins.attrNames s)'); do
+            echo "::group::build $shell"
+            nix develop ".#$shell" --command true
+            echo "::endgroup::"
+          done
+
+  push:
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          name: flake-lock
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "flake.lock: Update"
+          git push
